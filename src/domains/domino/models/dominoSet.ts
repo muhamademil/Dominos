@@ -46,6 +46,7 @@ export class DominoSet {
   }
 
   removeByTotal(total: number) {
+    if (total < 0) total = 0;
     this.data = this.data.filter(([a, b]) => a + b !== total);
   }
 }

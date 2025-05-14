@@ -17,7 +17,16 @@ export default function DominoControls({
 }: Props) {
   const [total, setTotal] = useState<number>(0);
 
-  return (
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    if (value < 0) {
+      // toast.error("Total cannot be less than 0!");
+      setTotal(0); // Reset to 0
+    } else {
+      setTotal(value);
+    }
+  };
+return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-center gap-3">
         <button onClick={() => onSort("asc")} className="btn">
@@ -40,7 +49,7 @@ export default function DominoControls({
         <input
           type="number"
           value={total}
-          onChange={(e) => setTotal(Number(e.target.value))}
+          onChange={handleInputChange}
           className="input"
           placeholder="Total to remove"
         />

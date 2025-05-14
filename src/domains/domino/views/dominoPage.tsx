@@ -1,21 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DominoSet } from "../models/dominoSet";
 import { defaultDominoes } from "../models/defaultDominos";
 import { createDominoSet } from "../controllers/dominoController";
 import DominoList from "../components/dominoList";
 import DominoControls from "../components/dominoControls";
 
+const dominoData = "dominoes";
+
 export default function DominoPage() {
-  const [dominoSet, setDominoSet] = useState<DominoSet>(createDominoSet());
+  const [dominoSet, setDominoSet] = useState<DominoSet | null>(null);
+  const [isRender, setisRender] = useState(false);
+
+  // Load from localStorage on mount (client-side only)
+  useEffect(() => {
+    const stored = localStorage.getItem(dominoData);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setDominoSet(new DominoSet(parsed));
+      } catch (e) {
+        console.error("Failed to parse dominoes from localStorage", e);
+        setDominoSet(createDominoSet());
+      }
+    } else {
+      setDominoSet(createDominoSet());
+    }
+
+    setisRender(true);
+  }, []);
+
+  // Save to localStorage every time dominoSet changes
+  useEffect(() => {
+    if (isRender && dominoSet) {
+      localStorage.setItem(
+        dominoData,
+        JSON.stringify(dominoSet.getDominoes())
+      );
+    }
+  }, [dominoSet, isRender]);
 
   const updateView = () => {
-    setDominoSet(new DominoSet([...dominoSet.getDominoes()]));
+    if (dominoSet) {
+      setDominoSet(new DominoSet([...dominoSet.getDominoes()]));
+    }
   };
 
+  const handleReset = () => {
+    const newSet = new DominoSet([...defaultDominoes]);
+    setDominoSet(newSet);
+    localStorage.removeItem(dominoData);
+  };
+
+  // Don't render anything until mounted (to prevent hydration error)
+  if (!isRender || !dominoSet) return null;
+
   return (
-    <main className="min-h-screen bg-gray-100 py-10 px-4">
+    <main className="min-h-screen bg-blue-950 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6 space-y-6">
         <h1 className="text-3xl font-bold text-blue-700 text-center">
           🎲 Domino Dashboard
@@ -49,10 +91,7 @@ export default function DominoPage() {
             dominoSet.removeByTotal(total);
             updateView();
           }}
-          onReset={() => {
-            dominoSet.reset([...defaultDominoes]);
-            updateView();
-          }}
+          onReset={handleReset}
         />
       </div>
     </main>
